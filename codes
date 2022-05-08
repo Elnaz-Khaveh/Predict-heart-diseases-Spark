@@ -1,3 +1,4 @@
+\\ The following commands were written in Scala Spark
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.sql.Row
 
@@ -21,58 +22,58 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.PipelineModel
 
-\\\loading the data
+\\loading the data
 val df = spark.read.option("inferSchema", true).option("header", true).csv("/home/elnaz/Documents/nosql/bigdata2/heart_2020_cleaned.csv")
 val sample = df.sample(false,0.001)
 
 
-\\\\splitting the data
+\\splitting the data
 val Array(trainData, testData) = sample.randomSplit(Array(0.9, 0.1))
 val features =   sample.columns.filter(! _.contains("HeartDisease"))
 
 
-\\\feature hasher
+\\feature hasher
 val feature = new FeatureHasher().setInputCols(features).setOutputCol("feature")
 val label = new StringIndexer().setInputCol("HeartDisease").setOutputCol("label")
 
-\\\\decision tree
+\\decision tree
 val decisiontree = new DecisionTreeClassifier().setLabelCol("label").setFeaturesCol("feature")
 val pipeline = new Pipeline().setStages(Array(feature,label,decisiontree))
 val model = pipeline.fit(trainData)
 val pred = model.transform(testData)
 
-\\\accuracy of the model
+\\accuracy of the model
 val predictionAndLabels = pred.select("prediction", "label")
 val evaluator = new MulticlassClassificationEvaluator()
 val accuracy = evaluator.evaluate(predictionAndLabels)
 
     
-\\\hyper parameter tuning and cross validation
+\\hyper parameter tuning and cross validation
 val evaluator1 = new BinaryClassificationEvaluator()
 val paramgrid = new ParamGridBuilder().addGrid(decisiontree.impurity,Array("gini","entropy")).addGrid(decisiontree.maxBins,Array(20,50,100)).addGrid(decisiontree.maxDepth,Array(5,10,15)).build()
 val cv1 = new CrossValidator().setEstimator(pipeline).setEstimatorParamMaps(paramgrid).setNumFolds(5).setEvaluator(evaluator1)
 val model1 = cv1.fit(trainData)
 val pred1 = model1.transform(testData)
 
-\\\finding the best model
+\\finding the best model
 val bestparam = model1.bestModel.asInstanceOf[PipelineModel].parent.extractParamMap()
 
-\\\\ The best model is for parameters impurity:"gini", maxDepth:15, maxBins:50
-\\\cross validation for the best model with accuracy, percision, recall
+\\ The best model is for parameters impurity:"gini", maxDepth:15, maxBins:50
+\\cross validation for the best model with accuracy, percision, recall
 val cvbest = new CrossValidator().setEstimator(pipeline).setEstimatorParamMaps(Array(bestparam)).setNumFolds(5).setEvaluator(evaluator1)
 val modelbest = cvbest.fit(trainData)
 val predbest = modelbest.transform(testData)
 val predictionAndLabelsbest = predbest.select("prediction", "label").rdd.map(x =>( x(0).asInstanceOf[Double],x(1).asInstanceOf[Double]))
 val metrics = new BinaryClassificationMetrics(predictionAndLabelsbest)
 
-\\\accuracy
+\\accuracy
 val accuracybest = new BinaryClassificationEvaluator().evaluate(predbest)
 
-\\\ Precision by threshold
+\\ Precision by threshold
 val precisionbest = metrics.precisionByThreshold
 precisionbest.foreach { case (t, p) => println(s"Threshold: $t, Precision: $p")}
 
-\\\Recall by threshold
+\\Recall by threshold
 val recallbest = metrics.recallByThreshold
 recallbest.foreach { case (t, r) => println(s"Threshold: $t, Recall: $r")}
 
@@ -81,43 +82,43 @@ recallbest.foreach { case (t, r) => println(s"Threshold: $t, Recall: $r")}
 
 
 
-\\\\\\\randomforests
-\\\pipeline
+\\randomforests
+\\pipeline
 val randomforest = new RandomForestClassifier().setLabelCol("label").setFeaturesCol("feature")
 val pipelinerf = new Pipeline().setStages(Array(feature,label,randomforest))
 val modelrf = pipelinerf.fit(trainData)
 val predrf = modelrf.transform(testData)
 
-\\\accuracy of the model
+\\accuracy of the model
 val predictionAndLabels = predrf.select("prediction", "label")
 val evaluatorrf = new MulticlassClassificationEvaluator()
 val accuracyrf = evaluatorrf.evaluate(predictionAndLabels)
 
-\\\hyperparameter tunning
+\\hyperparameter tunning
 val paramgridrf = new ParamGridBuilder().addGrid(randomforest.numTrees,Array(5,10,20)).addGrid(randomforest.featureSubsetStrategy,Array("auto")).addGrid(randomforest.impurity,Array("gini","entropy")).addGrid(randomforest.maxBins,Array(20,50,100)).addGrid(randomforest.maxDepth, Array(5,10,15)).build()
 
-\\\cross validation
+\\cross validation
 val cvrf = new CrossValidator().setEstimator(pipelinerf).setEstimatorParamMaps(paramgridrf).setNumFolds(5).setEvaluator(evaluator1)
 val modelrf = cvrf.fit(trainData)
 
-\\\best parameters
+\\best parameters
 val bestparamrf = modelrf.bestModel.asInstanceOf[PipelineModel].parent.extractParamMap()
 
-\\\crossvalidation for bestparameters
+\\crossvalidation for bestparameters
 val cvbestrf = new CrossValidator().setEstimator(pipelinerf).setEstimatorParamMaps(Array(bestparamrf)).setNumFolds(5).setEvaluator(evaluator1)
 val modelbestrf = cvbestrf.fit(trainData)
 val predbestrf = modelbestrf.transform(testData)
 val predictionAndLabelsbestrf = predbestrf.select("prediction", "label").rdd.map(x =>( x(0).asInstanceOf[Double],x(1).asInstanceOf[Double]))
 val metrics = new BinaryClassificationMetrics(predictionAndLabelsbestrf)
 
-\\\accuracy
+\\accuracy
 val accuracybestrf = new BinaryClassificationEvaluator()evaluate(predbestrf)
 
-\\\ Precision by threshold
+\\ Precision by threshold
 val precisionbestrf = metrics.precisionByThreshold
 precisionbestrf.foreach { case (t, p) => println(s"Threshold: $t, Precision: $p")}
 
-\\\Recall by threshold
+\\Recall by threshold
 val recallbestrf = metrics.recallByThreshold
 recallbestrf.foreach { case (t, r) => println(s"Threshold: $t, Recall: $r")}
 
