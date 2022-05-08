@@ -1,5 +1,6 @@
 # Predict-heart-diseases-Spark
 Predicting Heart Diseases via Decision Trees & Random Forests 
+
 Problem 1. Consider the “Key Indicators of Heart Disease” dataset as it is available from Kaggle:
 https://www.kaggle.com/datasets/kamilpytlak/personal-key-indicators-of-heart-disease
 You may download the dataset (in CSV format) from the above URL. This openly
@@ -8,6 +9,8 @@ heart diseases from about 320K patients in the U.S. The first (boolean) variable
 suffers from a heart disease (yes/no) and should be used as the target label for the following supervised
 classification steps. Follow the general methodology provided in RunDecisionsTrees-shell.scala to
 solve the following tasks.
+
+
 (a) Load the entire CSV file into a corresponding DataFrame either directly via spark.read.option(
 "inferSchema", true).option("header", true).csv(...) or via spark.createDataFrame(rdd)
 .toDF(...) from an initial RDD within your Spark session. In case you chose the latter option,
